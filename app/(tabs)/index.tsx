@@ -2,17 +2,17 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme.web';
-import { FontAwesome6 } from '@expo/vector-icons';
+import { Feather, FontAwesome5, FontAwesome6 } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useEffect, useState } from 'react';
-import { FlatList, Keyboard, KeyboardAvoidingView, Platform, TextInput, TouchableOpacity, View } from 'react-native';
+import { FlatList, Keyboard, KeyboardAvoidingView, Platform, TextInput, TouchableOpacity, View, Alert } from 'react-native';
 import tw from 'twrnc';
 
 export default function HomeScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
 
-  const [task, setTask] = useState<string | null>(null);
+  const [task, setTask] = useState<string | ''>('');
   const [taskItems, setTaskItems] = useState<{ id: string; title: string; state: boolean; }[]>([]);
 
   const [isInitialLoad, setIsInitialLoad] = useState(true);
@@ -30,9 +30,8 @@ export default function HomeScreen() {
   }, [taskItems]);
 
   const handleAddTask = () => {
-    if (task?.trim()) {
+    if (task?.trim().length >= 3) {
       Keyboard.dismiss();
-
       const newTask = {
         id: Date.now().toString(),
         title: task.trim(),
@@ -40,7 +39,13 @@ export default function HomeScreen() {
       }
 
       setTaskItems([...taskItems, newTask]);
-      setTask(null);
+      setTask('');
+    }
+    else if (task?.trim().length > 0) {
+      Alert.alert('Error', 'sependek dihh gw 💔')
+    }
+    else {
+      Alert.alert('Error', 'dimana tulisannya vro 🥀')
     }
   };
 
@@ -109,8 +114,26 @@ export default function HomeScreen() {
     const itemsCopy = taskItems.filter(task => task.id !== id);
     setTaskItems(itemsCopy);
     console.log('Deleted:', id)
+    if(editId === id) {
+      setTask("");
+      setIsEditing(false);
+      setEditId(null);
+    }
   }
-
+  function coolArrows() {
+    for(let i = 1;i <= 15;i++) {
+    let line = ''
+    for(let k = 1;k <= 15; k++) {
+      if(k < i) {
+        line = line.concat('=')
+      } else if(k == i) {
+        line = line.concat('>')
+      } else {
+        line = line.concat('.')
+      }
+    }
+    console.log(line)
+  }}
 
   return (
     <ThemedView style={tw`flex-1`}>
@@ -136,22 +159,21 @@ export default function HomeScreen() {
           data={taskItems}
           keyExtractor={item => item.id}
           renderItem={({ item }) => (
-            <TouchableOpacity onPress={() => 
+            <TouchableOpacity style={tw`p-1`} onPress={() => 
               completeTask(item.id)
             }>
-              <View style={tw`px-4 py-2 rounded-lg flex-row justify-between items-center bg-[${colors.secondary}]`}>
+              <View style={tw`px-4 py-2 rounded-lg flex-row justify-between items-center bg-[${colors.secondary}] shadow-md shadow-black inset-shadow-blue-500`}>
                 <View style={tw`flex-row gap-4 items-center justify-between flex-1`}>
-                  <ThemedText style={tw`text-[${item.state === false ? colors.textSecondary : colors.text}] ${item.state === false ? 'line-through' : ''}`}>{item.state ? '🟪' :'☑️'} {item.title}</ThemedText>
-                  <View style={tw`flex-row gap-5`}>
-                    <TouchableOpacity style={tw`p-1`} onPress={() => startEdit(item)}>
-                      <ThemedText style={tw`text-blue-500`}>
-                        Edit
-                      </ThemedText>
+                  <View style={tw`flex-row gap-2 items-center`}>
+                    <Feather name={item.state ? 'square' : 'check-square'} size={24} color={colors.text}/>
+                    <ThemedText style={tw`text-[${item.state === false ? colors.textSecondary : colors.text}] ${item.state ? '' : 'line-through'}`}>{item.title}</ThemedText>
+                  </View>
+                  <View style={tw`flex-row gap-5 items-center`}>
+                    <TouchableOpacity style={tw`p-1.5 bg-[${'#032a4e'}]`} onPress={() => startEdit(item)}>
+                      <FontAwesome5 name='pen' size={18} color='white'/>
                     </TouchableOpacity>
-                    <TouchableOpacity style={tw`p-1`} onPress={() => deleteTask(item.id)}>
-                      <ThemedText style={tw`text-red-500`}>
-                        Delete
-                      </ThemedText>
+                    <TouchableOpacity style={tw`p-1.5 bg-[${'#8b1a10'}]`} onPress={() => deleteTask(item.id)}>
+                      <FontAwesome5 name='trash-alt' size={18} color='white'/>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -163,7 +185,7 @@ export default function HomeScreen() {
 
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={tw`w-full flex-col justify-around absolute bottom-0 self-center gap-2`}
+          style={tw`w-full flex-col justify-around absolute bottom-4 self-center gap-2`}
           >
           <ThemedText style={tw`pl-4 text-[${colors.textSecondary}]`}>
             {isEditing
@@ -173,11 +195,12 @@ export default function HomeScreen() {
           </ThemedText>
           <View style={tw`w-full flex-row flex flex-1 gap-4`}>
             <TextInput
-              style={tw`px-4 py-2 border border-neutral-300 rounded-full flex-1 text-[${colors.text}] bg-[${colors.secondary}]`}
+              style={tw`px-4 py-2 border border-neutral-300 rounded-lg flex-1 text-[${colors.text}] bg-[${colors.secondary}]`}
               placeholderTextColor={colors.textSecondary}
               placeholder="Write a task"
               value={task || ''}
               onChangeText={(text) => setTask(text)}
+              multiline
             />
             <TouchableOpacity onPress={isEditing ? handleEdit : handleAddTask}>
               <ThemedView style={tw`w-10 h-10 border border-neutral-300 rounded-full align-middle justify-center`}>

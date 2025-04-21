@@ -4,7 +4,8 @@ import {
   FlatList,
   Keyboard, KeyboardAvoidingView,
   Platform, TextInput,
-  View, ScrollView
+  View, ScrollView,
+  Alert
 } from 'react-native';
 import tw from 'twrnc';
 
@@ -15,15 +16,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { FontAwesome } from '@expo/vector-icons';
+import { Feather, FontAwesome, FontAwesome5 } from '@expo/vector-icons';
 
 export default function explore() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
 
-  const [subject, setSubject] = useState<string | null>(null);
-  const [title, setTitle] = useState<string | null>(null);
-  const [deadline, setDeadline] = useState<string | null>(null);
+  const [subject, setSubject] = useState<string>('');
+  const [title, setTitle] = useState<string>('');
+  const [deadline, setDeadline] = useState<string>('');
   // const homework = [subject, title, deadline];
   const [homeworkItems, setHomeworkItems] = 
   useState<{
@@ -49,7 +50,8 @@ export default function explore() {
   }, [homeworkItems]);
 
   const handleAddHomework = () => {
-    if (subject?.trim() && title?.trim() && deadline?.trim()) {
+    if (subject?.trim().length >= 3 && title?.trim().length >= 3 && deadline?.trim().length >= 3) {
+      Keyboard.dismiss()
       const newHomework = {
         id: Date.now().toString(),
         subject: subject.trim(),
@@ -59,16 +61,22 @@ export default function explore() {
       };
 
       setHomeworkItems([...homeworkItems, newHomework]);
-      setSubject(null);
-      setTitle(null);
-      setDeadline(null);
+      setSubject('');
+      setTitle('');
+      setDeadline('');
+    }
+    else if (subject?.trim().length > 0 || title?.trim().length > 0 || deadline?.trim().length > 0) {
+      Alert.alert('Error', 'sependek dihh gw 💔');
+    }
+    else {
+      Alert.alert('Error', 'dimana tulisannya vro 🥀')
     }
   };
 
   const resetTextInputs = () => {
-    setSubject(null);
-    setTitle(null);
-    setDeadline(null);
+    setSubject('');
+    setTitle('');
+    setDeadline('');
   }
 
   const handleEdit = () => {
@@ -88,7 +96,7 @@ export default function explore() {
     resetTextInputs();
     setHomeworkItems(updated);
     setIsEditing(false);
-    setEditId(null);
+    setEditId('');
   };
   
 
@@ -104,26 +112,22 @@ export default function explore() {
   const loadHomeworks = async () => {
     try {
       const jsonHomeworks = await AsyncStorage.getItem('homeworks');
-      if (jsonHomeworks !== null) {
-        const loadedHomeworks = JSON.parse(jsonHomeworks);
-        setHomeworkItems(loadedHomeworks);
-        // console.log('Homeworks loaded successfully!');
-      } else {
-        // console.log('No homeworks found.');
-      }
+      const loadedHomeworks = jsonHomeworks ? JSON.parse(jsonHomeworks) : [];
+      setHomeworkItems(loadedHomeworks);
     } catch (err) {
       console.log('Error loading homeworks:', err);
     } finally {
-      setIsInitialLoad(false); // 🚀 turn off after loading
+      setIsInitialLoad(false);
     }
   };
+  
 
   const saveHomework = async () => {
     try {
       const jsonHomeworks = JSON.stringify(homeworkItems);
       await AsyncStorage.setItem('homeworks', jsonHomeworks);
       if(homeworkItems.length > 0) {
-        // console.log('Homeworks saved successfully!', jsonHomeworks);
+        // console.log('Homeworks saved successfully!', `jsonHomeworks`);
       } else {
         console.log('No homeworks to save.')
       }
@@ -172,30 +176,69 @@ export default function explore() {
           style={tw`w-full flex-col justify-around self-center gap-2 mb-4 z-100`}
           >
           <View style={tw`w-full flex-col flex gap-4`}>
-            <TextInput
-              style={tw`px-4 py-2 border border-neutral-300 rounded-md text-[${colors.text}] bg-[${colors.secondary}]`}
-              placeholderTextColor={colors.textSecondary}
-              placeholder="Mata pelajaran"
-              value={subject || ''}
-              onChangeText={(text) => setSubject(text)}
-              multiline
-            />
-            <TextInput
-              style={tw`px-4 py-2 border border-neutral-300 rounded-md text-[${colors.text}] bg-[${colors.secondary}]`}
-              placeholderTextColor={colors.textSecondary}
-              placeholder="Judul Tugas"
-              value={title || ''}
-              onChangeText={(text) => setTitle(text)}
-              multiline
-            />
-            <TextInput
-              style={tw`px-4 py-2 border border-neutral-300 rounded-md text-[${colors.text}] bg-[${colors.secondary}]`}
-              placeholderTextColor={colors.textSecondary}
-              placeholder="Deadline (tanggal)"
-              value={deadline || ''}
-              onChangeText={(text) => setDeadline(text)}
-              multiline
-            />
+          <View
+            style={[
+              tw`rounded-md`,
+              {
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.3,
+                shadowRadius: 4,
+                elevation: 5,
+              },
+            ]}
+          >
+              <TextInput
+                style={tw`px-4 py-2 border border-neutral-300 rounded-md text-[${colors.text}] bg-[${colors.secondary}]`}
+                placeholderTextColor={colors.textSecondary}
+                placeholder="Apa tugas hari ini?"
+                value={subject || ''}
+                onChangeText={(text) => setSubject(text)}
+                multiline
+              />
+            </View>
+            <View
+              style={[
+                tw`rounded-md`,
+                {
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.3,
+                  shadowRadius: 4,
+                  elevation: 5,
+                },
+              ]}
+            >
+              <TextInput
+                style={tw`px-4 py-2 border border-neutral-300 rounded-md text-[${colors.text}] bg-[${colors.secondary}]`}
+                placeholderTextColor={colors.textSecondary}
+                placeholder="Apa mapelnya?"
+                value={title || ''}
+                onChangeText={(text) => setTitle(text)}
+                multiline
+              />
+            </View>
+            <View
+              style={[
+                tw`rounded-md`,
+                {
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.3,
+                  shadowRadius: 4,
+                  elevation: 5,
+                },
+              ]}
+            >
+              <TextInput
+                style={tw`px-4 py-2 border border-neutral-300 rounded-md text-[${colors.text}] bg-[${colors.secondary}]`}
+                placeholderTextColor={colors.textSecondary}
+                placeholder="Sampe kapan icibos?"
+                value={deadline || ''}
+                onChangeText={(text) => setDeadline(text)}
+                multiline
+              />
+            </View>
             <ThemedButton onPress={isEditing ? handleEdit : handleAddHomework} style={tw`align-middle justify-center`}>
               <ThemedText style={tw`text-center p-2 bg-blue-500 rounded-lg text-white`}>{isEditing ? 'Edit' : 'Tambah'} Tugas</ThemedText>
             </ThemedButton>
@@ -205,40 +248,41 @@ export default function explore() {
         showsVerticalScrollIndicator={false}>
            {/* Homework Wrapper */}
           <ThemedView style={tw`flex-col gap-2`}>
+          {homeworkItems.length === 0 ? (
+            <View>
+              <ThemedText style={tw`text-center`}>Udh abis tugasnya icibos</ThemedText>
+            </View>
+          ) : (
             <FlatList
-            scrollEnabled={false}
-            style={tw``}
-            data={homeworkItems}
-            keyExtractor={item => item.id}
-            renderItem={({ item }) => (
-              <ThemedButton onPress={() =>
-                completeHomework(item.id)
-              }>
-                <View style={tw`px-2 py-2 rounded-lg flex-row justify-between items-center bg-[${colors.secondary}]`}>
-                  <View style={tw`flex-row items-center justify-between flex-1`}>
-                    <View style={tw`flex-col gap-1`}>
-                      <ThemedText style={tw`text-[${item.state === false ? colors.textSecondary : colors.text}] font-bold text-lg`}>{item.title} {item.state ? '' : '✅'}</ThemedText>
-                      <ThemedText style={tw`text-[${item.state === false ? colors.textSecondary : colors.text}]`}>📕 {item.subject}</ThemedText>
-                      <ThemedText style={tw`text-[${item.state === false ? colors.textSecondary : colors.text}]`}>🗓️ {item.deadline}</ThemedText>
-          
-                      <View style={tw`flex-row gap-5`}>
-                        <ThemedButton style={tw`p-1`} onPress={() => startEdit(item)}>
-                          <ThemedText style={tw`text-blue-500`}>
-                            Edit
-                          </ThemedText>
+              scrollEnabled={false}
+              style={tw``}
+              data={homeworkItems}
+              keyExtractor={item => item.id}
+              renderItem={({ item }) => (
+                <ThemedButton onPress={() => completeHomework(item.id)}>
+                  <View style={tw`px-2 py-2 rounded-lg flex-row justify-between items-center bg-[${colors.secondary}]`}>
+                    <View style={tw`flex-row items-center justify-between flex-1`}>
+                      <Feather name={item.state ? 'square' : 'check-square'} size={24} color={colors.text}/>
+                      <View style={tw`flex-col gap-1`}>
+                        <ThemedText style={tw`text-[${item.state === false ? colors.textSecondary : colors.text}] font-bold text-lg`}>{item.title}</ThemedText>
+                        <ThemedText style={tw`text-[${item.state === false ? colors.textSecondary : colors.text}]`}>📕 {item.subject}</ThemedText>
+                        <ThemedText style={tw`text-[${item.state === false ? colors.textSecondary : colors.text}]`}>🗓️ {item.deadline}</ThemedText>
+                      </View>
+                      <View style={tw`flex-row gap-1`}>
+                        <ThemedButton style={tw`p-2 bg-[${'#032a4e'}]`} onPress={() => startEdit(item)}>
+                          <FontAwesome5 name='pen' size={20} color='white'/>
                         </ThemedButton>
-                        <ThemedButton style={tw`p-1`} onPress={() => deleteHomework(item.id)}>
-                          <ThemedText style={tw`text-red-500`}>
-                            Delete
-                          </ThemedText>
+                        <ThemedButton style={tw`p-2 bg-[${'#8b1a10'}]`} onPress={() => deleteHomework(item.id)}>
+                          <FontAwesome5 name='trash-alt' size={20} color='white'/>
                         </ThemedButton>
                       </View>
                     </View>
                   </View>
-                </View>
-              </ThemedButton>
-            )}
-            ItemSeparatorComponent={() => <ThemedView style={tw`h-2`} />} />
+                </ThemedButton>
+              )}
+              ItemSeparatorComponent={() => <ThemedView style={tw`h-2`} />}
+            />
+          )}
           </ThemedView>
         </ScrollView>
       </SafeAreaView>
